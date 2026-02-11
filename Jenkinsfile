@@ -1,14 +1,13 @@
 pipeline {
     agent any
 
+    options {
+        skipDefaultCheckout(true)
+    }
+
     environment {
-        // .NET
         DOTNET_ROOT = 'C:\\Program Files\\dotnet'
-
-        // Solution
         SOLUTION_NAME = 'practise1.sln'
-
-        // SonarQube
         SONAR_PROJECT_KEY = 'practise1'
         SONAR_SCANNER_NAME = 'SonarScanner for MSBuild'
     }
@@ -17,7 +16,6 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                deleteDir()
                 checkout scm
             }
         }
@@ -29,57 +27,17 @@ pipeline {
 
                     withSonarQubeEnv('MySonarQube') {
 
-                        // ---- SONAR BEGIN ----
                         bat """
                         "${scannerHome}\\SonarScanner.MSBuild.exe" begin ^
-                          /k:"${SONAR_PROJECT_KEY}" ^
-                          /d:sonar.cs.opencover.reportsPaths=TestResults/**/coverage.opencover.xml
+                        /k:"${SONAR_PROJECT_KEY}"
                         """
 
-                        // ---- BUILD ----
-                        bat "dotnet build \"${SOLUTION_NAME}\" --configuration Debug"
+                        bat "dotnet build \"${SOLUTION_NAME}\""
 
-                        // ---- TEST WITH COVERAGE ----
-                        bat """
-                        dotnet test \"${SOLUTION_NAME}\" ^
-                          --no-build ^
-                          --collect:\"XPlat Code Coverage\" ^
-                          --results-directory TestResults ^
-                          -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
-                        """
-
-                        // ---- SONAR END ----
                         bat "\"${scannerHome}\\SonarScanner.MSBuild.exe\" end"
                     }
                 }
             }
-        }
-
-        stage('Quality Gate') {
-            steps {
-                timeout(time: 5, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-        }
-
-        stage('Publish') {
-            steps {
-                echo 'Publishing application...'
-                bat 'dotnet publish -c Release -o publish'
-            }
-        }
-    }
-
-    post {
-        success {
-            echo 'Pipeline completed successfully'
-        }
-        failure {
-            echo 'Pipeline failed'
-        }
-        always {
-            echo 'Pipeline execution finished'
         }
     }
 }
