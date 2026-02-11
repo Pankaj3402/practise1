@@ -2,49 +2,70 @@ pipeline {
     agent any
 
     environment {
-        // .NET SDK
+        // .NET
         DOTNET_ROOT = 'C:\\Program Files\\dotnet'
 
-        // Solution details
+        // Solution
         SOLUTION_NAME = 'practise1.sln'
 
-        // Project details
-        PROJECT_PATH = 'src\\practise1'
-        PROJECT_NAME = 'practise1.csproj'
+        // SonarQube
+        SONAR_PROJECT_KEY = 'practise1'
+        SONAR_SCANNER_NAME = 'SonarScanner for MSBuild'
     }
 
     stages {
-        stage('Build') {
-            steps {
-                echo 'Building application...'
-                bat 'dotnet build'
-            }
-        }
-        			        stage('SonarQube Analysis') {
-			            steps {
-			                script {
-			                    // Assign tool inside script block
-			                    def scannerHome = tool 'SonarScanner for MSBuild'
-			                    // Use withSonarQubeEnv inside script block
-			                    withSonarQubeEnv('MySonarQube') {
-			                        bat "\"${scannerHome}\\SonarScanner.MSBuild.exe\" begin /k:\"Batch33\""
-			                        bat "dotnet build"
-			                        bat "\"${scannerHome}\\SonarScanner.MSBuild.exe\" end"
-			                    }
-			                }
-			            }
-			        }
 
-        stage('Test') {
+        stage('Checkout') {
             steps {
-                echo 'Running tests...'
-                bat 'dotnet test'
+                deleteDir()
+                checkout scm
             }
         }
 
-        stage('Deploy') {
+        stage('SonarQube + Build + Test') {
             steps {
-                echo 'Deploying application...'
+                script {
+                    def scannerHome = tool SONAR_SCANNER_NAME
+
+                    withSonarQubeEnv('MySonarQube') {
+
+                        // ---- SONAR BEGIN ----
+                        bat """
+                        "${scannerHome}\\SonarScanner.MSBuild.exe" begin ^
+                          /k:"${SONAR_PROJECT_KEY}" ^
+                          /d:sonar.cs.opencover.reportsPaths=TestResults/**/coverage.opencover.xml
+                        """
+
+                        // ---- BUILD ----
+                        bat "dotnet build \"${SOLUTION_NAME}\" --configuration Debug"
+
+                        // ---- TEST WITH COVERAGE ----
+                        bat """
+                        dotnet test \"${SOLUTION_NAME}\" ^
+                          --no-build ^
+                          --collect:\"XPlat Code Coverage\" ^
+                          --results-directory TestResults ^
+                          -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+                        """
+
+                        // ---- SONAR END ----
+                        bat "\"${scannerHome}\\SonarScanner.MSBuild.exe\" end"
+                    }
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        stage('Publish') {
+            steps {
+                echo 'Publishing application...'
                 bat 'dotnet publish -c Release -o publish'
             }
         }
@@ -56,6 +77,9 @@ pipeline {
         }
         failure {
             echo 'Pipeline failed'
+        }
+        always {
+            echo 'Pipeline execution finished'
         }
     }
 }
