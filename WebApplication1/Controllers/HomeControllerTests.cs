@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
@@ -11,8 +10,8 @@ namespace WebApplication1.Tests.Controllers
     [TestFixture]
     public class HomeControllerTests
     {
-        private HomeController _controller;
-        private Mock<ILogger<HomeController>> _mockLogger;
+        private HomeController? _controller;
+        private Mock<ILogger<HomeController>>? _mockLogger;
 
         [SetUp]
         public void Setup()
@@ -24,43 +23,37 @@ namespace WebApplication1.Tests.Controllers
         [Test]
         public void Index_Returns_ViewResult()
         {
-            // Act
-            var result = _controller.Index();
-
-            // Assert
+            var result = _controller!.Index();
             Assert.That(result, Is.InstanceOf<ViewResult>());
         }
 
         [Test]
         public void Privacy_Returns_ViewResult()
         {
-            // Act
-            var result = _controller.Privacy();
-
-            // Assert
+            var result = _controller!.Privacy();
             Assert.That(result, Is.InstanceOf<ViewResult>());
         }
 
         [Test]
         public void Error_Returns_ViewResult_With_ErrorViewModel()
         {
-            // Act
-            var result = _controller.Error() as ViewResult;
+            var result = _controller!.Error();
 
-            // Assert
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.Model, Is.InstanceOf<ErrorViewModel>());
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+
+            var viewResult = result as ViewResult;
+            Assert.That(viewResult!.Model, Is.InstanceOf<ErrorViewModel>());
         }
 
         [Test]
         public void Error_Model_Should_Have_RequestId()
         {
-            // Act
-            var result = _controller.Error() as ViewResult;
-            var model = result.Model as ErrorViewModel;
+            var result = _controller!.Error() as ViewResult;
+            Assert.That(result, Is.Not.Null);
 
-            // Assert
-            Assert.That(model.RequestId, Is.Not.Null);
+            var model = result!.Model as ErrorViewModel;
+            Assert.That(model, Is.Not.Null);
+            Assert.That(model!.RequestId, Is.Not.Empty);
         }
     }
 }
