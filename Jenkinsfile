@@ -16,6 +16,7 @@ pipeline {
 
         stage('Checkout') {
             steps {
+                deleteDir()
                 checkout scm
             }
         }
@@ -27,28 +28,25 @@ pipeline {
 
                     withSonarQubeEnv('MySonarQube') {
 
-                        // 🔹 SONAR BEGIN
                         bat """
-                        "${scannerHome}\\SonarScanner.MSBuild.exe" begin ^
-                          /k:"${SONAR_PROJECT_KEY}" ^
-                          /d:sonar.cs.opencover.reportsPaths=TestResults/**/coverage.opencover.xml ^
-                          /d:sonar.cs.vstest.reportsPaths=TestResults/**/*.trx
-                        """
+"${scannerHome}\\SonarScanner.MSBuild.exe" begin ^
+  /k:"${SONAR_PROJECT_KEY}" ^
+  /d:sonar.sources=WebApplication1 ^
+  /d:sonar.tests=WebApplication1.Tests ^
+  /d:sonar.cs.opencover.reportsPaths=TestResults/**/coverage.opencover.xml
+"""
 
-                        // 🔹 BUILD
-                        bat "dotnet build \"${SOLUTION_NAME}\" --configuration Debug"
+                        bat "dotnet build \"${WORKSPACE}\\${SOLUTION_NAME}\" --configuration Debug"
 
-                        // 🔹 TEST + COVERAGE
                         bat """
-                        dotnet test \"${SOLUTION_NAME}\" ^
-                          --no-build ^
-                          --logger trx ^
-                          --results-directory TestResults ^
-                          --collect:\"XPlat Code Coverage\" ^
-                          -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
-                        """
+dotnet test \"${WORKSPACE}\\${SOLUTION_NAME}\" ^
+  --no-build ^
+  --logger trx ^
+  --results-directory TestResults ^
+  --collect:\"XPlat Code Coverage\" ^
+  -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+"""
 
-                        // 🔹 SONAR END
                         bat "\"${scannerHome}\\SonarScanner.MSBuild.exe\" end"
                     }
                 }
