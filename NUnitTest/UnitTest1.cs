@@ -1,5 +1,8 @@
+using NUnit.Framework;
+
 namespace NUnitTest
 {
+    [TestFixture]
     public class Tests
     {
         [SetUp]
