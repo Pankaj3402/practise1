@@ -4,6 +4,22 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- ⚠ Marks project as test project -->
+    <IsTestProject>true</IsTestProject>
   </PropertyGroup>
+
+  <!-- 🔹 Application dependencies -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.0" />
+  </ItemGroup>
+
+  <!-- 🔹 Test dependencies (NUnit + Moq) -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="NUnit" Version="3.14.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
+    <PackageReference Include="Moq" Version="4.20.72" />
+  </ItemGroup>
 
 </Project>
