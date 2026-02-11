@@ -31,18 +31,20 @@ pipeline {
                         bat """
                         "${scannerHome}\\SonarScanner.MSBuild.exe" begin ^
                           /k:"${SONAR_PROJECT_KEY}" ^
-                          /d:sonar.cs.opencover.reportsPaths=TestResults/**/coverage.opencover.xml
+                          /d:sonar.cs.opencover.reportsPaths=TestResults/**/coverage.opencover.xml ^
+                          /d:sonar.cs.vstest.reportsPaths=TestResults/**/*.trx
                         """
 
                         // 🔹 BUILD
                         bat "dotnet build \"${SOLUTION_NAME}\" --configuration Debug"
 
-                        // 🔹 TEST + COVERAGE (NUnit)
+                        // 🔹 TEST + COVERAGE
                         bat """
                         dotnet test \"${SOLUTION_NAME}\" ^
                           --no-build ^
-                          --collect:\"XPlat Code Coverage\" ^
+                          --logger trx ^
                           --results-directory TestResults ^
+                          --collect:\"XPlat Code Coverage\" ^
                           -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
                         """
 
@@ -55,7 +57,7 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
-                timeout(time: 5, unit: 'MINUTES') {
+                timeout(time: 10, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
