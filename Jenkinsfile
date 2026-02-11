@@ -27,7 +27,7 @@ pipeline {
 			                    def scannerHome = tool 'SonarScanner for MSBuild'
 			                    // Use withSonarQubeEnv inside script block
 			                    withSonarQubeEnv('MySonarQube') {
-			                        bat "\"${scannerHome}\\SonarScanner.MSBuild.exe\" begin /k:\"WebAppDemo\""
+			                        bat "\"${scannerHome}\\SonarScanner.MSBuild.exe\" begin /k:\"Batch33\""
 			                        bat "dotnet build"
 			                        bat "\"${scannerHome}\\SonarScanner.MSBuild.exe\" end"
 			                    }
