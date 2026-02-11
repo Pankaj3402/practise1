@@ -6,9 +6,9 @@ pipeline {
     }
 
     environment {
-        DOTNET_ROOT = 'C:\\Program Files\\dotnet'
-        SOLUTION_NAME = 'practise1.sln'
-        SONAR_PROJECT_KEY = 'practise1'
+        DOTNET_ROOT        = 'C:\\Program Files\\dotnet'
+        SOLUTION_NAME      = 'practise1.sln'
+        SONAR_PROJECT_KEY  = 'practise1'
         SONAR_SCANNER_NAME = 'SonarScanner for MSBuild'
     }
 
@@ -28,26 +28,33 @@ pipeline {
 
                     withSonarQubeEnv('MySonarQube') {
 
+                        // 🔹 SONAR BEGIN (NO manual sources/tests)
                         bat """
 "${scannerHome}\\SonarScanner.MSBuild.exe" begin ^
   /k:"${SONAR_PROJECT_KEY}" ^
-  /d:sonar.sources=WebApplication1 ^
-  /d:sonar.tests=WebApplication1.Tests ^
   /d:sonar.cs.opencover.reportsPaths=TestResults/**/coverage.opencover.xml
 """
 
-                        bat "dotnet build \"${WORKSPACE}\\${SOLUTION_NAME}\" --configuration Debug"
-
+                        // 🔹 BUILD SOLUTION
                         bat """
-dotnet test \"${WORKSPACE}\\${SOLUTION_NAME}\" ^
+dotnet build "${WORKSPACE}\\${SOLUTION_NAME}" ^
+  --configuration Debug
+"""
+
+                        // 🔹 TEST + COVERAGE (NUnit / xUnit / MSTest)
+                        bat """
+dotnet test "${WORKSPACE}\\${SOLUTION_NAME}" ^
   --no-build ^
   --logger trx ^
   --results-directory TestResults ^
-  --collect:\"XPlat Code Coverage\" ^
+  --collect:"XPlat Code Coverage" ^
   -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
 """
 
-                        bat "\"${scannerHome}\\SonarScanner.MSBuild.exe\" end"
+                        // 🔹 SONAR END
+                        bat """
+"${scannerHome}\\SonarScanner.MSBuild.exe" end
+"""
                     }
                 }
             }
