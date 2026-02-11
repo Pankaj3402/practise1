@@ -1,6 +1,17 @@
 pipeline {
     agent any
 
+    environment {
+        // .NET SDK
+        DOTNET_ROOT   = 'C:\\Program Files\\dotnet'
+
+        // Solution details
+        SOLUTION_NAME = 'practise1.sln'
+
+        // Project details
+        PROJECT_PATH = 'src\\practise1'
+        PROJECT_NAME = 'practise1.csproj'
+
     stages {
         stage('Build') {
             steps {
