@@ -27,17 +27,50 @@ pipeline {
 
                     withSonarQubeEnv('MySonarQube') {
 
+                        // 🔹 SONAR BEGIN
                         bat """
                         "${scannerHome}\\SonarScanner.MSBuild.exe" begin ^
-                        /k:"${SONAR_PROJECT_KEY}"
+                          /k:"${SONAR_PROJECT_KEY}" ^
+                          /d:sonar.cs.opencover.reportsPaths=TestResults/**/coverage.opencover.xml
                         """
 
-                        bat "dotnet build \"${SOLUTION_NAME}\""
+                        // 🔹 BUILD
+                        bat "dotnet build \"${SOLUTION_NAME}\" --configuration Debug"
 
+                        // 🔹 TEST + COVERAGE (NUnit)
+                        bat """
+                        dotnet test \"${SOLUTION_NAME}\" ^
+                          --no-build ^
+                          --collect:\"XPlat Code Coverage\" ^
+                          --results-directory TestResults ^
+                          -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+                        """
+
+                        // 🔹 SONAR END
                         bat "\"${scannerHome}\\SonarScanner.MSBuild.exe\" end"
                     }
                 }
             }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo '✅ Pipeline completed successfully'
+        }
+        failure {
+            echo '❌ Pipeline failed'
+        }
+        always {
+            echo '📦 Pipeline execution finished'
         }
     }
 }
