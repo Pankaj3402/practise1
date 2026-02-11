@@ -2,17 +2,34 @@ pipeline {
     agent any
 
     stages {
-        stage('Checkout') {
+        stage('Build') {
             steps {
-                git branch: 'main',
-                    url: 'https://github.com/your-repo.git'
+                echo 'Building application...'
+                bat 'dotnet build'
             }
         }
 
-        stage('Build') {
+        stage('Test') {
             steps {
-                echo 'Build started'
+                echo 'Running tests...'
+                bat 'dotnet test'
             }
+        }
+
+        stage('Deploy') {
+            steps {
+                echo 'Deploying application...'
+                bat 'dotnet publish -c Release -o publish'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline completed successfully'
+        }
+        failure {
+            echo 'Pipeline failed'
         }
     }
 }
